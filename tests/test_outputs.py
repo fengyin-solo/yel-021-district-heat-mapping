@@ -331,6 +331,16 @@ def test_short_site_id_is_refused(tmp_path):
     assert result.returncode == 1
     assert result.stderr == "运行拒收: BAD_INPUT\n"
     assert not output.exists()
+    minimum = make_payload()
+    minimum["site_id"] = "AB"
+    minimum_result, _, minimum_output = invoke(tmp_path, minimum, suffix="minimum")
+    assert minimum_result.returncode == 0
+    assert read(minimum_output)["site_id"] == "AB"
+    maximum = make_payload()
+    maximum["site_id"] = "S" * 40
+    maximum_result, _, maximum_output = invoke(tmp_path, maximum, suffix="maximum")
+    assert maximum_result.returncode == 0
+    assert read(maximum_output)["site_id"] == "S" * 40
 
 
 def test_loop_members_are_exact(tmp_path):
