@@ -1,0 +1,170 @@
+{
+  "gate_tests": [
+    "test_outputs.py::test_hidden_loop_mapping_is_recovered",
+    "test_outputs.py::test_hidden_riser_mapping_is_recovered",
+    "test_outputs.py::test_ledger_total_matches_result"
+  ],
+  "schema_version": 1,
+  "tests": {
+    "test_outputs.py::test_absent_result_parent_is_io_failure": {
+      "priority": "recovery",
+      "rationale": "absent result parent is io failure；这验证失败、重跑或恢复不变量，失败会造成旧数据和台账不一致。",
+      "weight": 0.022
+    },
+    "test_outputs.py::test_ambiguous_mapping_is_bad_model": {
+      "priority": "core",
+      "rationale": "ambiguous mapping is bad model；这是任务的主交付路径，失败意味着核心业务结果不可用。",
+      "weight": 0.12
+    },
+    "test_outputs.py::test_bad_input_preserves_existing_result": {
+      "priority": "recovery",
+      "rationale": "bad input preserves existing result；这验证失败、重跑或恢复不变量，失败会造成旧数据和台账不一致。",
+      "weight": 0.022
+    },
+    "test_outputs.py::test_bad_ledger_preserves_both_old_bytes": {
+      "priority": "recovery",
+      "rationale": "bad ledger preserves both old bytes；这验证失败、重跑或恢复不变量，失败会造成旧数据和台账不一致。",
+      "weight": 0.022
+    },
+    "test_outputs.py::test_boolean_period_hours_is_refused": {
+      "priority": "boundary",
+      "rationale": "boolean period hours is refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.017
+    },
+    "test_outputs.py::test_distinct_result_is_appended": {
+      "priority": "supporting",
+      "rationale": "distinct result is appended；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    },
+    "test_outputs.py::test_duplicate_json_key_is_refused": {
+      "priority": "boundary",
+      "rationale": "duplicate json key is refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.017
+    },
+    "test_outputs.py::test_duplicate_room_id_is_refused": {
+      "priority": "boundary",
+      "rationale": "duplicate room id is refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.017
+    },
+    "test_outputs.py::test_input_top_level_extra_key_is_refused": {
+      "priority": "boundary",
+      "rationale": "input top level extra key is refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.016
+    },
+    "test_outputs.py::test_input_top_level_missing_key_is_refused": {
+      "priority": "boundary",
+      "rationale": "input top level missing key is refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.016
+    },
+    "test_outputs.py::test_ledger_has_exact_compact_rows": {
+      "priority": "recovery",
+      "rationale": "ledger has exact compact rows；这验证失败、重跑或恢复不变量，失败会造成旧数据和台账不一致。",
+      "weight": 0.022
+    },
+    "test_outputs.py::test_loop_members_are_exact": {
+      "priority": "supporting",
+      "rationale": "loop members are exact；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    },
+    "test_outputs.py::test_loop_meter_balance_reconciles": {
+      "priority": "supporting",
+      "rationale": "loop meter balance reconciles；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    },
+    "test_outputs.py::test_loss_is_allocated_by_room_terminal_share": {
+      "priority": "core",
+      "rationale": "loss is allocated by room terminal share；这是任务的主交付路径，失败意味着核心业务结果不可用。",
+      "weight": 0.12
+    },
+    "test_outputs.py::test_pipe_loss_uses_supply_minus_ambient": {
+      "priority": "core",
+      "rationale": "pipe loss uses supply minus ambient；这是任务的主交付路径，失败意味着核心业务结果不可用。",
+      "weight": 0.12
+    },
+    "test_outputs.py::test_repeat_run_is_byte_identical": {
+      "priority": "recovery",
+      "rationale": "repeat run is byte identical；这验证失败、重跑或恢复不变量，失败会造成旧数据和台账不一致。",
+      "weight": 0.022
+    },
+    "test_outputs.py::test_repeated_success_is_ledger_idempotent": {
+      "priority": "recovery",
+      "rationale": "repeated success is ledger idempotent；这验证失败、重跑或恢复不变量，失败会造成旧数据和台账不一致。",
+      "weight": 0.022
+    },
+    "test_outputs.py::test_result_has_exact_top_level_keys": {
+      "priority": "schema",
+      "rationale": "result has exact top level keys；这验证结构、类型或序列化外观，失败会使下游无法稳定消费结果。",
+      "weight": 0.013
+    },
+    "test_outputs.py::test_result_is_single_compact_line": {
+      "priority": "schema",
+      "rationale": "result is single compact line；这验证结构、类型或序列化外观，失败会使下游无法稳定消费结果。",
+      "weight": 0.013
+    },
+    "test_outputs.py::test_riser_members_are_exact": {
+      "priority": "supporting",
+      "rationale": "riser members are exact；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    },
+    "test_outputs.py::test_room_members_are_exact": {
+      "priority": "supporting",
+      "rationale": "room members are exact；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    },
+    "test_outputs.py::test_same_result_and_ledger_path_is_refused": {
+      "priority": "recovery",
+      "rationale": "same result and ledger path is refused；这验证失败、重跑或恢复不变量，失败会造成旧数据和台账不一致。",
+      "weight": 0.022
+    },
+    "test_outputs.py::test_seven_periods_are_refused": {
+      "priority": "boundary",
+      "rationale": "seven periods are refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.016
+    },
+    "test_outputs.py::test_seventeen_rooms_are_refused": {
+      "priority": "boundary",
+      "rationale": "seventeen rooms are refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.016
+    },
+    "test_outputs.py::test_short_site_id_is_refused": {
+      "priority": "boundary",
+      "rationale": "short site id is refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.017
+    },
+    "test_outputs.py::test_six_periods_are_accepted": {
+      "priority": "supporting",
+      "rationale": "six periods are accepted；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    },
+    "test_outputs.py::test_sixteen_rooms_are_accepted": {
+      "priority": "core",
+      "rationale": "sixteen rooms are accepted；这是任务的主交付路径，失败意味着核心业务结果不可用。",
+      "weight": 0.12
+    },
+    "test_outputs.py::test_success_is_silent": {
+      "priority": "supporting",
+      "rationale": "success is silent；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    },
+    "test_outputs.py::test_supply_equal_to_ambient_is_refused": {
+      "priority": "boundary",
+      "rationale": "supply equal to ambient is refused；这验证公开边界和拒收口径，失败会产生越界输入或错误放行。",
+      "weight": 0.016
+    },
+    "test_outputs.py::test_tenant_bills_aggregate_rooms": {
+      "priority": "core",
+      "rationale": "tenant bills aggregate rooms；这是任务的主交付路径，失败意味着核心业务结果不可用。",
+      "weight": 0.12
+    },
+    "test_outputs.py::test_terminal_count_total_mismatch_is_bad_model": {
+      "priority": "supporting",
+      "rationale": "terminal count total mismatch is bad model；这补充验证外围业务约束，失败会降低交付完整性和可运维性。",
+      "weight": 0.009
+    }
+  },
+  "weight_policy": {
+    "basis": "business_priority",
+    "core_min_share": 0.5,
+    "version": 1
+  }
+}
