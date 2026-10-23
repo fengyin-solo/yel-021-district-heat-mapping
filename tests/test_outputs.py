@@ -5,6 +5,7 @@ import itertools
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -112,12 +113,37 @@ def encode(document):
     return json.dumps(document, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
+def expose_candidate_path(path):
+    if Path("/tmp") not in path.parents:
+        return
+    for ancestor in path.parents:
+        if ancestor == Path("/tmp"):
+            break
+        ancestor.chmod(0o755)
+    path.chmod(0o777)
+
+
+def candidate_command(tmp_path, *arguments):
+    expose_candidate_path(tmp_path)
+    command = [sys.executable, ENTRY, *map(str, arguments)]
+    if os.geteuid() == 0 and Path("/usr/bin/setpriv").is_file():
+        return [
+            "/usr/bin/setpriv",
+            "--reuid=65534",
+            "--regid=65534",
+            "--clear-groups",
+            "--",
+            *command,
+        ]
+    return command
+
+
 def invoke(tmp_path, document, raw=None, suffix="result"):
     source = tmp_path / "export.json"
     output = tmp_path / f"{suffix}.json"
     source.write_bytes((raw if raw is not None else encode(document)).encode("utf-8"))
     completed = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output)],
+        candidate_command(tmp_path, source, output),
         capture_output=True,
         text=True,
         timeout=30,
@@ -131,7 +157,7 @@ def invoke_ledger(tmp_path, document, suffix="ledgered"):
     ledger = tmp_path / f"{suffix}.jsonl"
     source.write_text(encode(document), encoding="utf-8")
     completed = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output), str(ledger)],
+        candidate_command(tmp_path, source, output, ledger),
         capture_output=True,
         text=True,
         timeout=30,
@@ -505,7 +531,7 @@ def test_repeat_run_is_byte_identical(tmp_path):
     result, source, output = invoke(tmp_path, make_payload())
     first = output.read_bytes()
     repeated = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output)],
+        candidate_command(tmp_path, source, output),
         capture_output=True,
         text=True,
         timeout=30,
@@ -553,7 +579,7 @@ def test_repeated_success_is_ledger_idempotent(tmp_path):
     first, source, output, ledger = invoke_ledger(tmp_path, make_payload())
     before = ledger.read_bytes()
     repeated = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output), str(ledger)],
+        candidate_command(tmp_path, source, output, ledger),
         capture_output=True,
         text=True,
         timeout=30,
@@ -570,7 +596,7 @@ def test_distinct_result_is_appended(tmp_path):
     changed["rate_per_kwh"] = 0.69
     source.write_text(encode(changed), encoding="utf-8")
     second = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output), str(ledger)],
+        candidate_command(tmp_path, source, output, ledger),
         capture_output=True,
         text=True,
         timeout=30,
@@ -586,7 +612,7 @@ def test_bad_ledger_preserves_both_old_bytes(tmp_path):
     result_before = output.read_bytes()
     ledger.write_bytes(b"\xff")
     repeated = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output), str(ledger)],
+        candidate_command(tmp_path, source, output, ledger),
         capture_output=True,
         text=True,
         timeout=30,
@@ -605,7 +631,7 @@ def test_same_result_and_ledger_path_is_refused(tmp_path):
     target.write_bytes(b"old\n")
     source.write_text(encode(make_payload()), encoding="utf-8")
     result = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(target), str(target)],
+        candidate_command(tmp_path, source, target, target),
         capture_output=True,
         text=True,
         timeout=30,
@@ -621,7 +647,7 @@ def test_absent_result_parent_is_io_failure(tmp_path):
     output = tmp_path / "nested" / "result.json"
     source.write_text(encode(make_payload()), encoding="utf-8")
     result = subprocess.run(
-        [sys.executable, ENTRY, str(source), str(output)],
+        candidate_command(tmp_path, source, output),
         capture_output=True,
         text=True,
         timeout=30,
