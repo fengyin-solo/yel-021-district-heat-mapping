@@ -184,7 +184,7 @@ def test_success_is_silent(tmp_path):
 
 
 def test_hidden_loop_mapping_is_recovered(tmp_path):
-    """题面：「房间到环路的唯一划分与每个环路的倍率要共同满足终端数量、面积和全部计费段」"""
+    """题面：「房间到立管、立管到环路的唯一两层划分与每个环路的倍率要共同满足终端数量、两处面积、」"""
     document = make_payload()
     result, _, output = invoke(tmp_path, document)
     actual = {
@@ -266,7 +266,7 @@ def test_loss_is_allocated_by_room_terminal_share(tmp_path):
 
 
 def test_tenant_bills_aggregate_rooms(tmp_path):
-    """题面：「租户账单把同一 `tenant_id` 下房间的 `billed_kwh` 相加。」"""
+    """题面：「租户账单把同一 `tenant_id` 下房间的 `billed_kwh` 相加。」；「电量乘 `rate_per_kwh`。各输出列表以对应编号递增排列。数值采用双精度计算，不中途」；「格式化。」"""
     document = make_payload()
     result, _, output = invoke(tmp_path, document)
     document_result = read(output)
@@ -278,6 +278,7 @@ def test_tenant_bills_aggregate_rooms(tmp_path):
     bills = {item["tenant_id"]: item for item in document_result["tenant_bills"]}
     assert result.returncode == 0
     assert {key: value["billed_kwh"] for key, value in bills.items()} == pytest.approx(expected)
+    assert [row["tenant_id"] for row in document_result["tenant_bills"]] == sorted(bills)
     assert all(
         value["cost"] == pytest.approx(value["billed_kwh"] * document["rate_per_kwh"])
         for value in bills.values()
@@ -344,33 +345,51 @@ def test_short_site_id_is_refused(tmp_path):
 
 
 def test_loop_members_are_exact(tmp_path):
-    """题面：「环路对象的成员是」"""
+    """题面：「环路记录只接受下列字段：」；「清单给 2–4 条记录，环路编号非空且互不重复。」"""
     document = make_payload()
     document["loops"][0]["label"] = "west"
     result, _, output = invoke(tmp_path, document)
     assert result.returncode == 1
     assert result.stderr == "运行拒收: BAD_INPUT\n"
     assert not output.exists()
+    duplicate = make_payload()
+    duplicate["loops"][1]["loop_id"] = duplicate["loops"][0]["loop_id"]
+    duplicate_result, _, duplicate_output = invoke(tmp_path, duplicate)
+    assert duplicate_result.returncode == 1
+    assert duplicate_result.stderr == "运行拒收: BAD_INPUT\n"
+    assert not duplicate_output.exists()
 
 
 def test_riser_members_are_exact(tmp_path):
-    """题面：「立管记录只接受下列字段：」"""
+    """题面：「立管记录只接受下列字段：」；「清单给 2–8 条记录，立管编号非空且互不重复。`terminal_count` 是 1 到 4」"""
     document = make_payload()
     document["risers"][0]["label"] = "north"
     result, _, output = invoke(tmp_path, document)
     assert result.returncode == 1
     assert result.stderr == "运行拒收: BAD_INPUT\n"
     assert not output.exists()
+    terminal = make_payload()
+    terminal["risers"][0]["terminal_count"] = 0
+    terminal_result, _, terminal_output = invoke(tmp_path, terminal)
+    assert terminal_result.returncode == 1
+    assert terminal_result.stderr == "运行拒收: BAD_INPUT\n"
+    assert not terminal_output.exists()
 
 
 def test_room_members_are_exact(tmp_path):
-    """题面：「房间对象的成员是」"""
+    """题面：「房间记录只接受下列字段：」；「互不重复。`area_m2`、`branch_length_m` 与 `flow_lps` 是正有限数，`terminal_kwh` 与」"""
     document = make_payload()
     document["rooms"][0]["note"] = "corner"
     result, _, output = invoke(tmp_path, document)
     assert result.returncode == 1
     assert result.stderr == "运行拒收: BAD_INPUT\n"
     assert not output.exists()
+    negative_area = make_payload()
+    negative_area["rooms"][0]["area_m2"] = -1.0
+    area_result, _, area_output = invoke(tmp_path, negative_area)
+    assert area_result.returncode == 1
+    assert area_result.stderr == "运行拒收: BAD_INPUT\n"
+    assert not area_output.exists()
 
 
 def test_boolean_period_hours_is_refused(tmp_path):
@@ -393,14 +412,14 @@ def test_duplicate_json_key_is_refused(tmp_path):
 
 
 def test_six_periods_are_accepted(tmp_path):
-    """题面：「`periods` 数组包含 3 到 6 个互不重复的」"""
+    """题面：「共 3 至 6 个，空串或重名都不算有效。」"""
     result, _, output = invoke(tmp_path, make_payload(period_count=6))
     assert result.returncode == 0
     assert len(read(output)["loop_totals"]) == 3
 
 
 def test_seven_periods_are_refused(tmp_path):
-    """题面：「`periods` 数组包含 3 到 6 个互不重复的」"""
+    """题面：「共 3 至 6 个，空串或重名都不算有效。」"""
     result, _, output = invoke(tmp_path, make_payload(period_count=7))
     assert result.returncode == 1
     assert result.stderr == "运行拒收: BAD_INPUT\n"
@@ -408,7 +427,7 @@ def test_seven_periods_are_refused(tmp_path):
 
 
 def test_sixteen_rooms_are_accepted(tmp_path):
-    """题面：「8 到 16 个房间。」"""
+    """题面：「`rooms` 里有 8–16 个房间。」"""
     document = make_payload(loop_count=4, rooms_per_loop=4)
     result, _, output = invoke(tmp_path, document)
     assert result.returncode == 0
@@ -417,7 +436,7 @@ def test_sixteen_rooms_are_accepted(tmp_path):
 
 
 def test_seventeen_rooms_are_refused(tmp_path):
-    """题面：「8 到 16 个房间。」"""
+    """题面：「`rooms` 里有 8–16 个房间。」"""
     document = make_payload(loop_count=4, rooms_per_loop=4)
     extra = dict(document["rooms"][0])
     extra["room_id"] = "R17"
@@ -429,7 +448,7 @@ def test_seventeen_rooms_are_refused(tmp_path):
 
 
 def test_duplicate_room_id_is_refused(tmp_path):
-    """题面：「房间编号互不重复。」"""
+    """题面：「房间编号与租户编号是非空字符串，房间编号」"""
     document = make_payload()
     document["rooms"][1]["room_id"] = document["rooms"][0]["room_id"]
     result, _, output = invoke(tmp_path, document)
@@ -510,7 +529,7 @@ def test_bad_input_preserves_existing_result(tmp_path):
 
 
 def test_ledger_has_exact_compact_rows(tmp_path):
-    """题面：「台账行成员是」"""
+    """题面：「台账行成员是」；「复核单路径是第二个参数。租户结账前可以把追加型台账作为第三个参数传入：」"""
     result, _, output, ledger = invoke_ledger(tmp_path, make_payload())
     row = json.loads(ledger.read_text(encoding="utf-8"))
     assert result.returncode == 0
